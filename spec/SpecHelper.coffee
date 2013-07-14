@@ -45,6 +45,7 @@ if grep
 @expectStreamEvents = (src, expectedEvents) ->
   verifySingleSubscriber src, expectedEvents
   verifySwitching src, expectedEvents
+  verifySwitching2 src, expectedEvents
 
 @expectPropertyEvents = (src, expectedEvents) ->
   expect(expectedEvents.length > 0).to.deep.equal(true)
@@ -113,6 +114,30 @@ verifySwitching = (srcF, expectedEvents, done) ->
           src.subscribe(newSink())
           Bacon.noMore
     src.subscribe(newSink())
+  it "outputs expected value in order when switching to new observer after each event", ->
+    expect(events).to.deep.equal(toValues(expectedEvents))
+  it "the stream is exhausted", ->
+     verifyExhausted src
+  it "cleans up observers", verifyCleanup
+
+verifySwitching2 = (srcF, expectedEvents, done) ->
+  src = null
+  events = []
+  before -> 
+    src = srcF()
+    expect(src instanceof Bacon.EventStream).to.equal(true)
+  before (done) ->
+    newSink = -> 
+      (event) ->
+        if event.isEnd()
+          done()
+        else
+          expect(event instanceof Bacon.Initial).to.deep.equal(false)
+          events.push(toValue(event))
+          unsub() if unsub?
+          src.subscribe(newSink())
+          Bacon.noMore
+    unsub = src.subscribe(newSink())
   it "outputs expected value in order when switching to new observer after each event", ->
     expect(events).to.deep.equal(toValues(expectedEvents))
   it "the stream is exhausted", ->
