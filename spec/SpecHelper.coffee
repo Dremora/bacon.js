@@ -127,6 +127,7 @@ verifySwitching2 = (srcF, expectedEvents, done) ->
     src = srcF()
     expect(src instanceof Bacon.EventStream).to.equal(true)
   before (done) ->
+    unsub = null
     newSink = -> 
       (event) ->
         if event.isEnd()
